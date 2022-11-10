@@ -45,18 +45,26 @@ namespace CrossCheck
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 FilePathText.Text = openFileDialog.FileName;
+
+                //Open Workbook for compare
+                ExcelBook = ExcelApp.Workbooks.Open(FilePathText.Text);
+
+                //Populate sheet selector combo boxes
+                for (int i = 1; i <= ExcelBook.Worksheets.Count; i++)
+                {
+                    InventorySheetSelector.Items.Add(ExcelBook.Worksheets[i].Name);
+                    SurplusSheetSelector.Items.Add(ExcelBook.Worksheets[i].Name);
+                }
             }
 
         }
 
         private void CheckButton_Click(object sender, EventArgs e)
         {
-            //Open Workbook for compare
-            ExcelBook = ExcelApp.Workbooks.Open(FilePathText.Text);
 
-            //Open Inventory and Surplus sheets
-            InventorySheet = ExcelBook.Worksheets["Inventory"];
-            SurplusSheet = ExcelBook.Worksheets["Surplus"];
+            //Open Inventory and Surplus sheets selected by user
+            InventorySheet = ExcelBook.Worksheets[InventorySheetSelector.SelectedItem.ToString()];
+            SurplusSheet = ExcelBook.Worksheets[SurplusSheetSelector.SelectedItem.ToString()];
 
             //Find Serial Columns & Row Ranges for each sheet
             String InventorySerialColumn = GetSerialRow(InventorySheet);
@@ -78,6 +86,7 @@ namespace CrossCheck
             SerialResults.IntersectWith(SurplusSerials);
 
             //Display results
+            ResultsBox.Text = "";
             foreach (String serial in SerialResults)
                 ResultsBox.Text += serial + " ";
         }
@@ -89,7 +98,7 @@ namespace CrossCheck
             Array Columns = (System.Array)worksheet.get_Range("A1", lastCol + "1").Cells.Value;
 
             //Return Serial Column Character
-            for (int i = 1; i < Columns.Length; i++)
+            for (int i = 1; i <= Columns.Length; i++)
                 if (Columns.GetValue(1, i).ToString().ToLower().Contains("serial"))
                     return ((char)(i + 64)).ToString();// add 65 and convert to char to change column numerical value to character
 
